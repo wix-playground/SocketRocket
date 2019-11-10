@@ -34,7 +34,7 @@ NS_ASSUME_NONNULL_BEGIN
     self = [super init];
     if (!self) return self;
 
-    _accessQueue = dispatch_queue_create("com.facebook.socketrocket.delegate.access", DISPATCH_QUEUE_CONCURRENT);
+    _accessQueue = dispatch_queue_create("com.facebook.socketrocket.delegate.access", dispatch_queue_attr_make_with_autorelease_frequency(DISPATCH_QUEUE_SERIAL, DISPATCH_AUTORELEASE_FREQUENCY_WORK_ITEM));
     _dispatchQueue = dispatch_get_main_queue();
 
     return self;

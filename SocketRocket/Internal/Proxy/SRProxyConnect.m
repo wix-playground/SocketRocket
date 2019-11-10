@@ -55,7 +55,7 @@
     _url = url;
     _connectionRequiresSSL = SRURLRequiresSSL(url);
 
-    _writeQueue = dispatch_queue_create("com.facebook.socketrocket.proxyconnect.write", DISPATCH_QUEUE_SERIAL);
+    _writeQueue = dispatch_queue_create("com.facebook.socketrocket.proxyconnect.write", dispatch_queue_attr_make_with_autorelease_frequency(DISPATCH_QUEUE_SERIAL, DISPATCH_AUTORELEASE_FREQUENCY_WORK_ITEM));
     _inputQueue = [NSMutableArray arrayWithCapacity:2];
 
     return self;
