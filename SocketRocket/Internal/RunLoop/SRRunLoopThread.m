@@ -70,7 +70,7 @@
         while ([_runLoop runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]]) {
 
         }
-        assert(NO);
+        NSParameterAssert(NO);
     }
 }
 

@@ -30,7 +30,7 @@
     _bytesNeeded = bytesNeeded;
     _readToCurrentFrame = readToCurrentFrame;
     _unmaskBytes = unmaskBytes;
-    assert(_scanner || _bytesNeeded);
+    NSParameterAssert(_scanner || _bytesNeeded);
 }
 
 @end

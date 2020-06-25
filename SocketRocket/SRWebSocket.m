@@ -151,7 +151,7 @@ NSString *const SRHTTPResponseErrorKey = @"HTTPResponseStatusCode";
     self = [super init];
     if (!self) return self;
 
-    assert(request.URL);
+    NSParameterAssert(request.URL);
     _url = request.URL;
     _urlRequest = request;
     _requestedProtocols = [protocols copy];
@@ -247,7 +247,7 @@ NSString *const SRHTTPResponseErrorKey = @"HTTPResponseStatusCode";
 
 - (void)assertOnWorkQueue;
 {
-    assert(dispatch_get_specific((__bridge void *)self) == (__bridge void *)_workQueue);
+    NSParameterAssert(dispatch_get_specific((__bridge void *)self) == (__bridge void *)_workQueue);
 }
 
 ///--------------------------------------
@@ -312,7 +312,7 @@ NSString *const SRHTTPResponseErrorKey = @"HTTPResponseStatusCode";
 
 - (void)open
 {
-    assert(_url);
+	NSParameterAssert(_url);
     NSAssert(self.readyState == SR_CONNECTING, @"Cannot call -(void)open on SRWebSocket more than once.");
 
     _selfRetain = self;
@@ -447,7 +447,7 @@ NSString *const SRHTTPResponseErrorKey = @"HTTPResponseStatusCode";
     SRDebugLog(@"Connected");
 
     _secKey = SRBase64EncodedStringFromData(SRRandomData(16));
-    assert([_secKey length] == 24);
+    NSParameterAssert([_secKey length] == 24);
 
     CFHTTPMessageRef message = SRHTTPConnectMessageCreate(_urlRequest,
                                                           _secKey,
@@ -501,7 +501,7 @@ NSString *const SRHTTPResponseErrorKey = @"HTTPResponseStatusCode";
 
 - (void)closeWithCode:(NSInteger)code reason:(NSString *)reason;
 {
-    assert(code);
+    NSParameterAssert(code);
     dispatch_async(_workQueue, ^{
         if (self.readyState == SR_CLOSING || self.readyState == SR_CLOSED) {
             return;
@@ -532,8 +532,8 @@ NSString *const SRHTTPResponseErrorKey = @"HTTPResponseStatusCode";
             BOOL success = [reason getBytes:(char *)mutablePayload.mutableBytes + sizeof(uint16_t) maxLength:payload.length - sizeof(uint16_t) usedLength:&usedLength encoding:NSUTF8StringEncoding options:NSStringEncodingConversionExternalRepresentation range:NSMakeRange(0, reason.length) remainingRange:&remainingRange];
 #pragma unused (success)
 
-            assert(success);
-            assert(remainingRange.length == 0);
+            NSParameterAssert(success);
+            NSParameterAssert(remainingRange.length == 0);
 
             if (usedLength != maxMsgSize) {
                 payload = [payload subdataWithRange:NSMakeRange(0, usedLength + sizeof(uint16_t))];
@@ -852,7 +852,7 @@ static inline BOOL closeCodeIsValid(int closeCode) {
 
 - (void)_handleFrameHeader:(frame_header)frame_header curData:(NSData *)curData;
 {
-    assert(frame_header.opcode != 0);
+    NSParameterAssert(frame_header.opcode != 0);
 
     if (self.readyState == SR_CLOSED) {
         return;
@@ -888,7 +888,7 @@ static inline BOOL closeCodeIsValid(int closeCode) {
             }
         }
     } else {
-        assert(frame_header.payload_length <= SIZE_T_MAX);
+        NSParameterAssert(frame_header.payload_length <= SIZE_T_MAX);
         [self _addConsumerWithDataLength:(size_t)frame_header.payload_length callback:^(SRWebSocket *sself, NSData *newData) {
             if (isControlFrame) {
                 [sself _handleFrameWithData:newData opCode:frame_header.opcode];
@@ -935,13 +935,13 @@ static const uint8_t SRPayloadLenMask   = 0x7F;
 
 - (void)_readFrameContinue;
 {
-    assert((_currentFrameCount == 0 && _currentFrameOpcode == 0) || (_currentFrameCount > 0 && _currentFrameOpcode > 0));
+    NSParameterAssert((_currentFrameCount == 0 && _currentFrameOpcode == 0) || (_currentFrameCount > 0 && _currentFrameOpcode > 0));
 
     [self _addConsumerWithDataLength:2 callback:^(SRWebSocket *sself, NSData *data) {
         __block frame_header header = {0};
 
         const uint8_t *headerBuffer = data.bytes;
-        assert(data.length >= 2);
+        NSCParameterAssert(data.length >= 2);
 
         if (headerBuffer[0] & SRRsvMask) {
             [sself _closeWithProtocolError:@"Server used RSV bits"];
@@ -995,7 +995,7 @@ static const uint8_t SRPayloadLenMask   = 0x7F;
                 size_t offset = 0;
 
                 if (header.payload_length == 126) {
-                    assert(mapped_size >= sizeof(uint16_t));
+                    NSCParameterAssert(mapped_size >= sizeof(uint16_t));
                     uint16_t payloadLength = 0;
                     memcpy(&payloadLength, mapped_buffer, sizeof(uint16_t));
                     payloadLength = CFSwapInt16BigToHost(payloadLength);
@@ -1003,7 +1003,7 @@ static const uint8_t SRPayloadLenMask   = 0x7F;
                     header.payload_length = payloadLength;
                     offset += sizeof(uint16_t);
                 } else if (header.payload_length == 127) {
-                    assert(mapped_size >= sizeof(uint64_t));
+                    NSCParameterAssert(mapped_size >= sizeof(uint64_t));
                     uint64_t payloadLength = 0;
                     memcpy(&payloadLength, mapped_buffer, sizeof(uint64_t));
                     payloadLength = CFSwapInt64BigToHost(payloadLength);
@@ -1011,11 +1011,11 @@ static const uint8_t SRPayloadLenMask   = 0x7F;
                     header.payload_length = payloadLength;
                     offset += sizeof(uint64_t);
                 } else {
-                    assert(header.payload_length < 126 && header.payload_length >= 0);
+                    NSCParameterAssert(header.payload_length < 126 && header.payload_length >= 0);
                 }
 
                 if (header.masked) {
-                    assert(mapped_size >= sizeof(_currentReadMaskOffset) + offset);
+                    NSCParameterAssert(mapped_size >= sizeof(_currentReadMaskOffset) + offset);
                     memcpy(eself->_currentReadMaskKey, ((uint8_t *)mapped_buffer) + offset, sizeof(eself->_currentReadMaskKey));
                 }
 
@@ -1115,7 +1115,7 @@ static const uint8_t SRPayloadLenMask   = 0x7F;
 - (void)_addConsumerWithDataLength:(size_t)dataLength callback:(data_callback)callback readToCurrentFrame:(BOOL)readToCurrentFrame unmaskBytes:(BOOL)unmaskBytes;
 {
     [self assertOnWorkQueue];
-    assert(dataLength);
+    NSParameterAssert(dataLength);
 
     [_consumers addObject:[_consumerPool consumerWithScanner:nil handler:callback bytesNeeded:dataLength readToCurrentFrame:readToCurrentFrame unmaskBytes:unmaskBytes]];
     [self _pumpScanner];
@@ -1226,7 +1226,7 @@ static const char CRLFCRLFBytes[] = {'\r', '\n', '\r', '\n'};
         NSData *subdata = (NSData *)dispatch_data_create_subrange(_readBuffer, _readBufferOffset, readBufferSize - _readBufferOffset);
         foundSize = consumer.consumer(subdata);
     } else {
-        assert(consumer.bytesNeeded);
+        NSParameterAssert(consumer.bytesNeeded);
         if (curSize >= bytesNeeded) {
             foundSize = bytesNeeded;
         } else if (consumer.readToCurrentFrame) {
@@ -1395,7 +1395,7 @@ static const size_t SRFrameHeaderOverhead = 32;
     SRMaskBytesSIMD(frameBufferPayloadPointer, payloadLength, maskKey);
     frameBufferSize += payloadLength;
 
-    assert(frameBufferSize <= frameData.length);
+    NSParameterAssert(frameBufferSize <= frameData.length);
     frameData.length = frameBufferSize;
 
     [self _writeData:frameData];
@@ -1437,7 +1437,7 @@ static const size_t SRFrameHeaderOverhead = 32;
             if (self.readyState >= SR_CLOSING) {
                 return;
             }
-            assert(_readBuffer);
+            NSParameterAssert(_readBuffer);
 
             if (!_requestRequiresSSL && self.readyState == SR_CONNECTING && aStream == _inputStream) {
                 [self didConnect];

@@ -294,7 +294,7 @@
 
 - (void)_initializeStreams
 {
-    assert(_url.port.unsignedIntValue <= UINT32_MAX);
+    NSParameterAssert(_url.port.unsignedIntValue <= UINT32_MAX);
     uint32_t port = _url.port.unsignedIntValue;
     if (port == 0) {
         port = (_connectionRequiresSSL ? 443 : 80);
